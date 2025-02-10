@@ -44,7 +44,7 @@ async def cmnd(message: types.Message):
         cursor.execute(f"INSERT INTO users VALUES ('{message.from_user.full_name}', '@{message.from_user.username or '-'}', {message.from_user.id})")
         connection.commit()
 
-    await message.reply("🤖 Привет, хочешь *пообщаться* с настоящий истуственным интелектом Lunary AI? \n💜 Просто напиши свой промпт (или проще говоря вопрос) и я отвечу на него как только смогу", parse_mode = "MarkdownV2")
+    await message.reply("🤖 Привет, хочешь пообщаться с настоящим искуственным интелектом Lunary AI? \n💜 Просто напиши свой промпт (или проще говоря вопрос) и я отвечу на него как только смогу")
 
 @dp.message_handler()
 async def cmnd(message: types.Message):
