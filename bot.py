@@ -66,7 +66,6 @@ async def cmnd(message: types.Message):
         await responce_to_user(message)
     elif message.chat.type.find("group"):
         if message.text.lower().startswith("lunaryai,"):
-            print(message.text.removeprefix("lunaryai,"))
             message.text = message.text.removeprefix("lunaryai,")
             await responce_to_user(message)
 
