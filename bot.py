@@ -18,10 +18,12 @@ dp = Dispatcher(bot, storage=storage)
 connection = sqlite3.connect("data_users.db")
 cursor = connection.cursor()
 
-#openai/gpt-4o-mini, openai/gpt-3.5-turbo, deepseek/deepseek-chat, qwen/qvq-72b-preview, 
-# eva-unit-01/eva-qwen-2.5-72b, qwen/qwen-2.5-72b-instruct, google/gemini-flash-1.5
-# google/gemma-2-9b-it, meta-llama/llama-3.3-70b-instruct, microsoft/phi-4
-lunaryBot = ClientLunaryAI(os.getenv("API_KEY"), "google/gemma-2-9b-it")
+# openai/gpt-3.5-turbo - need check on hosting
+# openai/gpt-4o-mini - without markdown 
+# google/gemini-flash-1.5, microsoft/phi-4, google/gemma-2-9b-it, meta-llama/llama-3.3-70b-instruct - with markdown
+# qwen/qwen-2.5-72b-instruct - with markdown, but i see chines language
+# eva-unit-01/eva-qwen-2.5-72b - 4096 token capacity required, 3726 available
+lunaryBot = ClientLunaryAI(os.getenv("API_KEY"), "google/gemini-flash-1.5")
 
 def output(message: str, warn: bool = False):
     if warn == False:

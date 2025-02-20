@@ -43,5 +43,20 @@ class ClientLunaryAI:
 
             json_responce = json.loads(response.text)
             content = json_responce["choices"][0]["message"]["content"]
+            content_list = list(content)
+            for num in range(0, len(content_list)):
+                
+                if content_list[num] == "*" and content_list[num+1] == " ":
+                    content_list[num] == ""
+                    content_list[num+1] == ""
+                if content_list[num] == "#":
+                    bruh = 0
+                    while True:
+                        if content_list[num+bruh] == "#":
+                            content_list[num+bruh] = ""
+                            bruh += 1
+                        else:
+                            break
+                        
 
-            return content
+            return ''.join(content_list)
