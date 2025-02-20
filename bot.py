@@ -29,6 +29,20 @@ def output(message: str, warn: bool = False):
     else:
         print(f"\033[93m[{datetime.now().strftime('%d.%m.%Y %H:%M:%S')}] {message}\033[0m")
 
+async def responce_to_user(message: types.Message):
+    messagetimer = await bot.send_message(message.chat.id, "Пожалуйста подождите, генерирую ответ...")
+    try:
+        result = lunaryBot.request_to_api(message.text)
+        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: {message.text}")
+        await message.reply(result, parse_mode = "Markdown")
+    except RequestError as exp:
+        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) получил ошибку: {str(exp)}, ошибка API: {exp.status_code}", warn=True)
+        await message.reply(f"Извините, но я не смогу вам ответить. \nЭто не ответ ИИ, а заготовленное сообщение в случае проблемы с настоящим ИИ. Тех.поддержка скоро починит меня и я снова смогу отвечать на ваши промпты.")
+    except Exception as exp:
+        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) получил ошибку: {str(exp)}", warn=True)
+        await message.reply(result)
+    await messagetimer.delete()
+
 async def on_startup(_):
     cursor.execute("""CREATE TABLE IF NOT EXISTS users (
         full_name TEXT,
@@ -48,18 +62,13 @@ async def cmnd(message: types.Message):
 
 @dp.message_handler()
 async def cmnd(message: types.Message):
-    messagetimer = await bot.send_message(message.chat.id, "Пожалуйста подождите, генерирую ответ...")
-    try:
-        result = lunaryBot.request_to_api(message.text)
-        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: {message.text}")
-        await message.reply(result, parse_mode = "Markdown")
-    except RequestError as exp:
-        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) получил ошибку: {str(exp)}, ошибка API: {exp.status_code}", warn=True)
-        await message.reply(f"Извините, но я не смогу вам ответить. \nЭто не ответ ИИ, а заготовленное сообщение в случае проблемы с настоящим ИИ. Тех.поддержка скоро починит меня и я снова смогу отвечать на ваши промпты.")
-    except Exception as exp:
-        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) получил ошибку: {str(exp)}", warn=True)
-        await message.reply(result)
-    await messagetimer.delete()
+    if message.chat.type == "private":
+        await responce_to_user(message)
+    elif message.chat.type.find("group"):
+        if message.text.lower().startswith("lunaryai,"):
+            print(message.text.removeprefix("lunaryai,"))
+            message.text = message.text.removeprefix("lunaryai,")
+            await responce_to_user(message)
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
