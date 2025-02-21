@@ -5,6 +5,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import sqlite3
 from datetime import datetime
 import os
+import json
 
 from lunaryapi import ClientLunaryAI, RequestError
 from dotenv import load_dotenv
@@ -15,11 +16,19 @@ bot = Bot(os.getenv("TOKEN_BOT"))
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
+prefixs = json.loads(os.getenv("PREFIXS"))
 connection = sqlite3.connect("data_users.db")
 cursor = connection.cursor()
 
 lunaryBot = ClientLunaryAI(os.getenv("API_KEY"), "google/gemini-2.0-flash-001")
 
+def getprefix(text: str):
+    for prefix in prefixs:
+        if prefix in text.lower():
+            return prefix
+        
+    return False
+        
 def output(message: str, warn: bool = False):
     if warn == False:
         print(f"\033[92m[{datetime.now().strftime('%d.%m.%Y %H:%M:%S')}]\033[0m {message}")
@@ -67,9 +76,10 @@ async def cmnd(message: types.Message):
         url = await message.photo[-1].get_url()
         await responce_to_user(message, url)
     elif message.chat.type.find("group"):
-        if message.caption and message.caption.lower().startswith("lunaryai,"):
+        prefix = getprefix(message.caption)
+        if message.caption and prefix:
             url = await message.photo[-1].get_url()
-            message.caption = message.caption[len("lunaryai,"):]
+            message.caption = message.caption[len(prefix):]
             await responce_to_user(message, url)
 
 @dp.message_handler()
@@ -77,8 +87,9 @@ async def cmnd(message: types.Message):
     if message.chat.type == "private":
         await responce_to_user(message)
     elif message.chat.type.find("group"):
-        if message.text.lower().startswith("lunaryai,"):
-            message.text = message.text[len("lunaryai,"):]
+        prefix = getprefix(message.text)
+        if prefix:
+            message.text = message.text[len(prefix):]
             await responce_to_user(message)
 
 if __name__ == "__main__":
