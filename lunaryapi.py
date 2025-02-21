@@ -20,18 +20,7 @@ class ClientLunaryAI:
         self.api_key = key
         self.ai_model = model
 
-    def request_to_api(self, prompt: str):
-        data = json.dumps({
-            "model": self.ai_model,
-            "messages": [{
-                "role": "system",
-                "content": "You - Lunary AI, telegram bot created by Mars Games Co."
-            },{
-                "role": "user",
-                "content": prompt
-            }]
-        })
-
+    def _request_to_api(self, data):
         with requests.post(
             url = "https://openrouter.ai/api/v1/chat/completions",
             headers = {"Authorization": f"Bearer {self.api_key}"},
@@ -60,3 +49,58 @@ class ClientLunaryAI:
                         
 
             return ''.join(content_list)
+        
+    def send_message(self, prompt: str):
+        data = json.dumps({
+            "model": self.ai_model,
+            "messages": [{
+                "role": "system",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "You - Lunary AI, telegram bot created by Mars Games Co."
+                    }
+                ]
+            },{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt
+                    }
+                ]
+            }]
+        })
+
+        request = self._request_to_api(data)
+        return request
+        
+    def send_image(self, prompt: str, image_url: str):
+        data = json.dumps({
+            "model": self.ai_model,
+            "messages": [{
+                "role": "system",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "You - Lunary AI, telegram bot created by Mars Games Co."
+                    }
+                ]
+            },{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                          "url": image_url
+                        }
+                    }
+                ]
+            }]
+        })
+        request = self._request_to_api(data)
+        return request

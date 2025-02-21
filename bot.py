@@ -18,12 +18,7 @@ dp = Dispatcher(bot, storage=storage)
 connection = sqlite3.connect("data_users.db")
 cursor = connection.cursor()
 
-# openai/gpt-3.5-turbo - need check on hosting
-# openai/gpt-4o-mini - without markdown 
-# google/gemini-flash-1.5, microsoft/phi-4, google/gemma-2-9b-it, meta-llama/llama-3.3-70b-instruct - with markdown
-# qwen/qwen-2.5-72b-instruct - with markdown, but i see chines language
-# eva-unit-01/eva-qwen-2.5-72b - 4096 token capacity required, 3726 available
-lunaryBot = ClientLunaryAI(os.getenv("API_KEY"), "google/gemini-flash-1.5")
+lunaryBot = ClientLunaryAI(os.getenv("API_KEY"), "google/gemini-2.0-flash-001")
 
 def output(message: str, warn: bool = False):
     if warn == False:
@@ -31,11 +26,15 @@ def output(message: str, warn: bool = False):
     else:
         print(f"\033[93m[{datetime.now().strftime('%d.%m.%Y %H:%M:%S')}] {message}\033[0m")
 
-async def responce_to_user(message: types.Message):
+async def responce_to_user(message: types.Message, photo_url: str = None):
     messagetimer = await bot.send_message(message.chat.id, "Пожалуйста подождите, генерирую ответ...")
     try:
-        result = lunaryBot.request_to_api(message.text)
-        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: {message.text}")
+        if photo_url:
+            result = lunaryBot.send_image(message.caption, photo_url)
+            output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: '{message.caption}', прикрепив картинку: {photo_url}")
+        else:
+            result = lunaryBot.send_message(message.text)
+            output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: '{message.text}'")
         await message.reply(result, parse_mode = "Markdown")
     except RequestError as exp:
         output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) получил ошибку: {str(exp)}, ошибка API: {exp.status_code}", warn=True)
@@ -62,13 +61,23 @@ async def cmnd(message: types.Message):
 
     await message.reply("🤖 Привет, хочешь пообщаться с настоящим искуственным интелектом Lunary AI? \n💜 Просто напиши свой промпт (или проще говоря вопрос) и я отвечу на него как только смогу")
 
+@dp.message_handler(content_types = types.ContentType.PHOTO)
+async def cmnd(message: types.Message):
+    url = await message.photo[-1].get_url()
+    if message.chat.type == "private":
+        await responce_to_user(message, url)
+    elif message.chat.type.find("group"):
+        if message.caption.lower().startswith("lunaryai,"):
+            message.caption = message.caption[len("lunaryai,"):]
+            await responce_to_user(message, url)
+
 @dp.message_handler()
 async def cmnd(message: types.Message):
     if message.chat.type == "private":
         await responce_to_user(message)
     elif message.chat.type.find("group"):
         if message.text.lower().startswith("lunaryai,"):
-            message.text = message.text.removeprefix("lunaryai,")
+            message.text = message.text[len("lunaryai,"):]
             await responce_to_user(message)
 
 if __name__ == "__main__":
