@@ -63,11 +63,12 @@ async def cmnd(message: types.Message):
 
 @dp.message_handler(content_types = types.ContentType.PHOTO)
 async def cmnd(message: types.Message):
-    url = await message.photo[-1].get_url()
     if message.chat.type == "private":
+        url = await message.photo[-1].get_url()
         await responce_to_user(message, url)
     elif message.chat.type.find("group"):
-        if message.caption.lower().startswith("lunaryai,"):
+        if message.caption and message.caption.lower().startswith("lunaryai,"):
+            url = await message.photo[-1].get_url()
             message.caption = message.caption[len("lunaryai,"):]
             await responce_to_user(message, url)
 
