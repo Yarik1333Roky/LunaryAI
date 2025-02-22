@@ -76,11 +76,12 @@ async def cmnd(message: types.Message):
         url = await message.photo[-1].get_url()
         await responce_to_user(message, url)
     elif message.chat.type.find("group"):
-        prefix = getprefix(message.caption)
-        if message.caption and prefix:
-            url = await message.photo[-1].get_url()
-            message.caption = message.caption[len(prefix):]
-            await responce_to_user(message, url)
+        if message.caption:
+            prefix = getprefix(message.caption)
+            if prefix:
+                url = await message.photo[-1].get_url()
+                message.caption = message.caption[len(prefix):]
+                await responce_to_user(message, url)
 
 @dp.message_handler()
 async def cmnd(message: types.Message):
