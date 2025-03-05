@@ -35,22 +35,29 @@ def output(message: str, warn: bool = False):
     else:
         print(f"\033[93m[{datetime.now().strftime('%d.%m.%Y %H:%M:%S')}] {message}\033[0m")
 
-async def responce_to_user(message: types.Message, photo_url: str = None):
-    messagetimer = await bot.send_message(message.chat.id, "Пожалуйста подождите, генерирую ответ...")
+async def reply(message, text: str):
     try:
-        if photo_url:
-            result = lunaryBot.send_image(message.caption, photo_url)
-            output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: '{message.caption}', прикрепив картинку: {photo_url}")
-        else:
-            result = lunaryBot.send_message(message.text)
-            output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: '{message.text}'")
-        await message.reply(result, parse_mode = "Markdown")
+        await message.reply(text, parse_mode = "Markdown")
     except RequestError as exp:
         output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) получил ошибку: {str(exp)}, ошибка API: {exp.status_code}", warn=True)
         await message.reply(f"Извините, но я не смогу вам ответить. \nЭто не ответ ИИ, а заготовленное сообщение в случае проблемы с настоящим ИИ. Тех.поддержка скоро починит меня и я снова смогу отвечать на ваши промпты.")
     except Exception as exp:
         output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) получил ошибку: {str(exp)}", warn=True)
-        await message.reply(result)
+        await message.reply(text)
+
+async def responce_to_user(message: types.Message, photo_url: str = None):
+    messagetimer = await bot.send_message(message.chat.id, "Пожалуйста подождите, генерирую ответ...")
+    if photo_url:
+        result = lunaryBot.send_image(message.caption, photo_url)
+        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: '{message.caption}', прикрепив картинку: {photo_url}")
+    else:
+        result = lunaryBot.send_message(message.text)
+        output(f"{message.from_user.full_name} ({message.from_user.id}, @{message.from_user.username or '-'}) спросил: '{message.text}'")
+    if len(result) > 4096:
+        for x in range(0, len(result), 4096):
+            await reply(message, result[x:x+4096])
+    else:
+        await reply(message, result)
     await messagetimer.delete()
 
 async def on_startup(_):
